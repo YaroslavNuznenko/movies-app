@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { MovieThing } from '../pages/MoviesPage';
 
 type MoviesRowProps = {
@@ -174,4 +174,4 @@ const MovieRow = ({
   );
 };
 
-export default MovieRow;
+export default React.memo(MovieRow);
