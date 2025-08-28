@@ -34,19 +34,14 @@ const MovieList = ({
   showCommentsFunction,
   shareMovieFunction,
 }: MoviesListProps) => {
-  // const [movies, setMovies] = React.useState<MovieThing[]>([]);
   const [hasNextPage, setHasNextPage] = React.useState(true);
   const [currentPage, setCurrentPage] = React.useState<number>(1);
 
   const searchQuery = useDebouncedValue(query, 400);
   const inFlight = React.useRef(false);
-  const abortRef = React.useRef<AbortController | null>(null);
   const listRef = React.useRef<List>(null);
 
-  // Скидання списку та завантажувача при зміні запиту
   React.useEffect(() => {
-    // скасувати попередній запит і очистити стан
-    abortRef.current?.abort();
     inFlight.current = false;
     setMovies([]);
     setHasNextPage(true);
@@ -62,15 +57,10 @@ const MovieList = ({
       if (!hasNextPage || inFlight.current || searchQuery.length < 3) return;
       inFlight.current = true;
 
-      // новий AbortController на кожне завантаження
-      const ac = new AbortController();
-      abortRef.current = ac;
-
       try {
         const res = await fetch(
           `https://api.themoviedb.org/3/search/movie?api_key=demo&query=${encodeURIComponent(searchQuery)}&page=${currentPage}`,
           {
-            // signal: ac.signal,
             headers: {
               Authorization: `Bearer ${import.meta.env.VITE_MOVIES_DB_API_KEY}`,
               accept: 'application/json',
@@ -80,10 +70,6 @@ const MovieList = ({
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = await res.json();
-        // const { data, hasMore } = (await res.json()) as {
-        //   data: MovieThing[];
-        //   hasMore: boolean;
-        // };
 
         const mappedData = data.results.map((item: any) => ({
           id: item.id,
@@ -97,17 +83,13 @@ const MovieList = ({
         const nextPage = currentPage + 1;
 
         setMovies((prev) => [...prev, ...mappedData]);
-        console.log(
-          'nextPage <= data.total_pages',
-          nextPage <= data.total_pages
-        );
+
         setHasNextPage(nextPage <= data.total_pages);
 
         setCurrentPage(nextPage);
       } catch (e) {
         if ((e as any).name !== 'AbortError') {
           console.error(e);
-          // за бажанням: показати тост/стан помилки
           setHasNextPage(false);
         }
       } finally {
